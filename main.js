@@ -1598,7 +1598,8 @@ var GUI = /** @class */ (function () {
         // NetCube settings
         var nCubeParams = {
             node_size: ['overall_degree'],
-            charge: 25
+            charge: 25,
+            hideLinks: false
         };
         var nCubeFolder = this.gui.addFolder('NetCube');
         nCubeFolder.add(nCubeParams, 'node_size', ['overall_degree', 'in_degree', 'out_degree', 'non_degree']).onChange(function () {
@@ -1609,6 +1610,11 @@ var GUI = /** @class */ (function () {
         nCubeFolder.add(nCubeParams, 'charge').min(1).max(50).step(1).onChange(function () {
             _this.nCubeConfigEmitter.emit('change', {
                 nCharge: nCubeParams.charge
+            });
+        });
+        nCubeFolder.add(nCubeParams, 'hideLinks').onChange(function () {
+            _this.nCubeConfigEmitter.emit('change', {
+                nLinks: nCubeParams.hideLinks
             });
         });
     };
@@ -1697,23 +1703,30 @@ var NetCube = /** @class */ (function () {
     };
     NetCube.prototype.addNetworkDegreeToNodes = function () {
         var _this = this;
-        var degree_out = this.linksPerNode;
-        var in_degree_map = [];
         this.dm.data.forEach(function (d) {
-            in_degree_map[d.id] = 0;
+            // initialize properties
+            d.network_degree_in = 0;
+            d.network_degree_out = 0;
+            d.network_degree_overall = 0;
+            d.incomingNodes = new Set();
+        });
+        // For every node check against every other node
+        this.dm.data.forEach(function (source) {
+            source.network_degree_out = source.target_nodes.length; // outgoing edges just length of target_nodes
+            _this.dm.data.forEach(function (target) {
+                if (source.id === target.id)
+                    return; // return so we dont check same node against itsself
+                target.target_nodes.forEach(function (targetNode) {
+                    if (targetNode === source.id) { // if target of target is same as source - incoming edge
+                        source.network_degree_in++;
+                        source.incomingNodes.add(targetNode); // add to incomingNodes
+                    }
+                });
+            });
         });
         this.dm.data.forEach(function (d) {
-            for (var a = 0; a < _this.linksPerNode; a++) {
-                var related_id = d.target_nodes[a];
-                in_degree_map[related_id]++;
-            }
-        });
-        this.dm.data.forEach(function (d) {
-            var degree_in = in_degree_map[d.id];
-            var degree_overall = degree_out + degree_in;
-            d.network_degree_in = degree_in;
-            d.network_degree_out = degree_out;
-            d.network_degree_overall = degree_overall;
+            // calc total
+            d.network_degree_overall = d.network_degree_in + d.network_degree_out;
         });
     };
     NetCube.prototype.createBottomLayer = function (color) {
@@ -2417,10 +2430,16 @@ var NetCube = /** @class */ (function () {
     NetCube.prototype.createNodes = function () {
         this.resetNodesInTimeSlices();
         var geometry = new three_full__WEBPACK_IMPORTED_MODULE_1__["SphereGeometry"](_cube_config__WEBPACK_IMPORTED_MODULE_2__["CUBE_CONFIG"].NODE_SIZE, 32, 32);
+        // using linear scale to calculate the degree size for nodes 
+        var degreeExtent = d3__WEBPACK_IMPORTED_MODULE_4__["extent"](this.dm.data, function (d) {
+            return d.network_degree_in;
+        });
+        this.degreeScale = d3__WEBPACK_IMPORTED_MODULE_4__["scaleLinear"]().domain([degreeExtent[0], degreeExtent[1]]).range([1, 6]);
         this.addTargetByInformationInDataItems();
         for (var i = 0; i < this.dm.data.length; i++) {
             var dataItem = this.dm.data[i];
-            var networkDegreeFactor = this.getNetworkDegreeFactor(dataItem);
+            // let networkDegreeFactor = this.getNetworkDegreeFactor(dataItem);
+            var networkDegreeFactor = this.degreeScale(dataItem.network_degree_in);
             var material = new three_full__WEBPACK_IMPORTED_MODULE_1__["MeshBasicMaterial"]({ color: this.colors(dataItem.category_1) });
             var point = new three_full__WEBPACK_IMPORTED_MODULE_1__["Mesh"](geometry, material);
             var position = this.getNormalizedPositionById(dataItem.id);
@@ -2435,6 +2454,8 @@ var NetCube = /** @class */ (function () {
             } //end if            
         } //end for
     };
+    // This function needs to be improved using d3.scaleLinear with min/max incoming node count (SS: Done at at the top, no need for this function anymore) 
+    // Instead of just returning 5 if result is higher than 5 (lots of nodes have way more than 5 incoming nodes)
     NetCube.prototype.getNetworkDegreeFactor = function (dataItem) {
         var result = 1;
         switch (this.nodeSizeEncodeFactor) {
@@ -3723,7 +3744,7 @@ module.exports = ".hide{\n    display: none !important;\n}\n.wrapper {\n    widt
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"modal\" #modal>\n        <span class=\"close\" (click)=\"closePicture()\">&times;</span>\n        <img class=\"modal-content\" id=\"img01\" #img (load)=\"imageLoaded()\">\n        <div id=\"caption\" #caption></div>\n        <button id=\"previous\" type=\"button\" class=\"btn btn-default\" aria-label=\"Left Align\" (click)=\"getPrevious()\">\n            <i class=\"fa fa-chevron-left\"></i>\n        </button>\n        <button id=\"next\" type=\"button\" class=\"btn btn-default\" aria-label=\"Right Align\" (click)=\"getNext()\">\n            <i class=\"fa fa-chevron-right\"></i>\n        </button>\n</div>\n\n<!-- Modal 2 -->\n<div [ngClass]=\"{'show': showModal}\" class=\"modal fade\" id=\"exampleModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"exampleModalLabel\" aria-hidden=\"true\">\n  <div class=\"modal-dialog\" role=\"document\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <h5 class=\"modal-title\" id=\"exampleModalLabel\">Most Influential Movies, Based on Cinematic References\n</h5>\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\">\n          <span aria-hidden=\"true\">&times;</span>\n        </button>\n      </div>\n      <div class=\"modal-body\">\nThis data shows the most influential 2000 feature films with regard to references between movies. It is an excerpt from the study of Spitz & Horvat (2014) on the long-term impact which movies had on other movies throughout film history. In the PolyCube system, the year of production, country of origin, movie genre, and movie references are represented from left to right.   </div>\n      <div class=\"modal-footer\">\n        <button (click)=\"showModal=false\" type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Close</button>\n      </div>\n    </div>\n  </div>\n</div>\n\n\n<div class=\"wrapper\">\n    <ng-sidebar-container>\n        <!-- Preview Panel Side Bar -->\n        <ng-sidebar [(opened)]=\"previewPanel\" mode=\"over\" animate=\"false\" sidebarClass=\"side-bar\">\n            <div class=\"pc-tooltip\" #tooltip></div>\n            \n            <div class=\"preview-item\" *ngIf=\"previewItem\">\n                <button id=\"close-preview\" type=\"button\" class=\"close\" aria-label=\"Close Preview\" (click)=\"closePreview()\">\n                    <span>&times;</span>\n                </button>\n                <!-- <h2 class=\"preview-title\">{{ previewItem.title }} </h2> -->\n                <img (click)=\"openPicture(previewItem.mediaURL, previewItem.description, previewItem.date)\" class=\"preview-picture\"\n                    [src]=\"previewItem.mediaURL\" (load)=\"imageLoaded()\">\n                <div *ngFor=\"let cat of previewItem.categories\" class=\"categories\">\n                    <span class=\"badge badge-secondary\">{{ cat }}</span>\n                </div>\n                <p class=\"preview-metainfo\">{{ previewItem.date }}, {{ previewItem.location }}</p>\n                <br>\n                <p class=\"preview-description\">{{ previewItem.description }}</p>\n                <div class=\"related\">\n                    <p>Related objects:</p>\n                    <div class=\"image-grid\">\n                        <div class=\"image-grid-cell\" *ngFor=\"let r of previewItem.related; let i = index\">\n                            <div *ngIf=\"i < 6\">\n                                <a  href=\"javascript:void(0)\" (click)=\"selectNode(r)\">\n                                     <img *ngIf=\"getRelatedNode(r)\" class=\"image-grid-image\" [src]=\"getRelatedNode(r).external_url\"  data-toggle=\"tooltip\" data-placement=\"bottom\" [title]=\"getRelatedNode(r).description\"> \n                                    <!-- {{ getRelatedNode(r).description === \"\" ? 'No description' : getRelatedNode(r).description }} -->\n                                </a>\n                            </div>\n                        </div>\n                    </div>\n                    <!-- <ul class=\"list-group\">\n                        <li class=\"list-group-item\" *ngFor=\"let r of previewItem.related\">\n                            <a href=\"javascript:void(0)\" (click)=\"selectNode(r)\">\n                                <img class=\"list-group-item-thumbnail\" [src]=\"getRelatedNode(r).external_url\" [alt]=\"getRelatedNode(r).description\">\n                            </a>\n                        </li>\n                    </ul> -->\n                </div>\n                <br>\n                <div class=\"network-degree\">\n                    <p>Network degree in: {{previewItem.network_degree_in}}</p>\n                    <p>Network degree out: {{previewItem.network_degree_out}}</p>\n                    <p>Network degree overall: {{previewItem.network_degree_overall}}</p>\n                </div>\n                <br>\n                <a [attr.href]=\"previewItem.externalURL\" target=\"_blank\">More information on this object</a>\n            </div>\n        </ng-sidebar>\n\n        <!-- Page Content -->\n        <div ng-sidebar-content class=\"side-bar-content\">\n            <div class=\"canvases\">\n                <canvas id=\"webgl-canvas\" #webGLCanvas></canvas>\n                <div id=\"css-canvas\" #cssCanvas></div>\n            </div>\n\n            <app-timeslider \n                *ngIf=\"dataLoaded\" \n                [minDate]=\"getMinDate()\" \n                [maxDate]=\"getMaxDate()\" \n                [width]=\"60\"\n                [height]=\"getWindowInnerHeight()\" \n                (onSelect)=\"filterDataWithTimeSlider($event)\">\n            </app-timeslider>\n\n            \n            <div class=\"category-legend\" *ngIf=\"dataLoaded\">\n                <!-- <label>Clickable Legend:</label> -->\n                <span class=\"category-selection\">Selected: {{ currentlySelectedCategory ? currentlySelectedCategory : 'none' }}</span>\n                <div class=\"category-wrapper\" *ngIf=\"showColorCodingLegend\">\n                    <div *ngFor=\"let c of categories\">\n                        <span data-toggle=\"tooltip\" data-placement=\"bottom\" [title]=\"c\"\n                            (click)=\"filterDataByCategory(c)\"\n                            [className]=\"c === currentlySelectedCategory ? 'badge badge-secondary active' : 'badge badge-secondary inactive'\"\n                            [ngStyle]=\"{ 'background-color' : categoriesAndColors.get(c) }\">&nbsp;</span>\n                    </div>\n                </div>\n                <div class=\"category-wrapper\">\n                    <div>\n                        <span class=\"badge badge-secondary\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"Clear\"\n                            (click)=\"clearCategoryFilter()\" style=\"background-color:#a9a9a9; font-size: 12px;\">&times;</span>\n                    </div>\n                </div>\n            </div>\n\n            <div class=\"options\">\n            <div class=\"btn-group\" role=\"group\">\n                <button type=\"button\" class=\"btn\" id=\"geo-view-button\" #geobtn title=\"Maps\">  <i class=\"fa fa-map-o\"></i></button>\n                <button type=\"button\" class=\"btn\" id=\"set-view-button\" #setbtn title=\"Categories \"> <i class=\"fa fa-spinner\"></i></button>\n                <button type=\"button\" class=\"btn\" id=\"net-view-button\" #netbtn title=\"Relations\"> <i class=\"fa fa-connectdevelop\"></i></button>\n            </div>\n            <div class=\"btn-group\" role=\"group\">\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"stc-view-button\" title=\"3D View\"> <i class=\"fa fa-cube\"></i></button>\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"jp-view-button\" title=\"Split View\"><i class=\"fa fa-object-ungroup\"></i></button>\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"si-view-button\" title=\"Colored View\"> <i class=\"fa fa-object-group\"></i></button>\n            </div>\n            </div>\n\n            <div class=\"overlay\" *ngIf=\"dataLoaded\">\n                <!--{{ formatDate(currentlySelectedDateExtent[0]) }} - {{ formatDate(currentlySelectedDateExtent[1]) }}</p>-->\n\n                <p> \n                <a (click)=\"showModal=true\">Vis info  | </a> \n                <a target=\"_blank\" href='https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0108857#s2'>Data Source </a> \n                </p>\n\n            </div>\n        </div>\n    </ng-sidebar-container>\n   \n\n    <div class=\"processing-change\" *ngIf=\"processingChange\">\n        <div class=\"spinner-border text-info\" role=\"status\">\n            <span class=\"sr-only\"></span>\n        </div>\n        <p>{{ processingMessage }}</p>\n    </div>\n\n    <div *ngIf=\"errorOccurred\" class=\"alert alert-danger error\">\n        <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\" (click)=\"errorOccurred = false\">&times;</a>\n        <strong>Error</strong>\n        <p>{{ errorMessage }}</p>\n    </div>\n</div>"
+module.exports = "<div class=\"modal\" #modal>\n        <span class=\"close\" (click)=\"closePicture()\">&times;</span>\n        <img class=\"modal-content\" id=\"img01\" #img (load)=\"imageLoaded()\">\n        <div id=\"caption\" #caption></div>\n        <button id=\"previous\" type=\"button\" class=\"btn btn-default\" aria-label=\"Left Align\" (click)=\"getPrevious()\">\n            <i class=\"fa fa-chevron-left\"></i>\n        </button>\n        <button id=\"next\" type=\"button\" class=\"btn btn-default\" aria-label=\"Right Align\" (click)=\"getNext()\">\n            <i class=\"fa fa-chevron-right\"></i>\n        </button>\n</div>\n\n<!-- Modal 2 -->\n<div [ngClass]=\"{'show': showModal}\" class=\"modal fade\" id=\"exampleModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"exampleModalLabel\" aria-hidden=\"true\">\n  <div class=\"modal-dialog\" role=\"document\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <h5 class=\"modal-title\" id=\"exampleModalLabel\">Most Influential Movies, Based on Cinematic References\n</h5>\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\">\n          <span aria-hidden=\"true\">&times;</span>\n        </button>\n      </div>\n      <div class=\"modal-body\">\n      <p>\nThis data shows the most influential 2000 feature films with regard to references between movies. It is an excerpt from the study of Spitz & Horvat (2014) on the long-term impact which movies had on other movies throughout film history (link). In the PolyCube system, the year of production, country of origin, movie genre, and movie references are represented from left to right.  \n    </p>\n</div>\n      <div class=\"modal-footer\">\n        <button (click)=\"showModal=false\" type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Close</button>\n      </div>\n    </div>\n  </div>\n</div>\n\n\n<div class=\"wrapper\">\n    <ng-sidebar-container>\n        <!-- Preview Panel Side Bar -->\n        <ng-sidebar [(opened)]=\"previewPanel\" mode=\"over\" animate=\"false\" sidebarClass=\"side-bar\">\n            <div class=\"pc-tooltip\" #tooltip></div>\n            \n            <div class=\"preview-item\" *ngIf=\"previewItem\">\n                <button id=\"close-preview\" type=\"button\" class=\"close\" aria-label=\"Close Preview\" (click)=\"closePreview()\">\n                    <span>&times;</span>\n                </button>\n                <!-- <h2 class=\"preview-title\">{{ previewItem.title }} </h2> -->\n                <img (click)=\"openPicture(previewItem.mediaURL, previewItem.description, previewItem.date)\" class=\"preview-picture\"\n                    [src]=\"previewItem.mediaURL\" (load)=\"imageLoaded()\">\n                <div *ngFor=\"let cat of previewItem.categories\" class=\"categories\">\n                    <span class=\"badge badge-secondary\">{{ cat }}</span>\n                </div>\n                <p class=\"preview-metainfo\">{{ previewItem.date }}, {{ previewItem.location }}</p>\n                <br>\n                <p class=\"preview-description\">{{ previewItem.description }}</p>\n                <div class=\"related\">\n                    <p>Related objects:</p>\n                    <div class=\"image-grid\">\n                        <div class=\"image-grid-cell\" *ngFor=\"let r of previewItem.related; let i = index\">\n                            <div *ngIf=\"i < 6\">\n                                <a  href=\"javascript:void(0)\" (click)=\"selectNode(r)\">\n                                     <img *ngIf=\"getRelatedNode(r)\" class=\"image-grid-image\" [src]=\"getRelatedNode(r).external_url\"  data-toggle=\"tooltip\" data-placement=\"bottom\" [title]=\"getRelatedNode(r).description\"> \n                                    <!-- {{ getRelatedNode(r).description === \"\" ? 'No description' : getRelatedNode(r).description }} -->\n                                </a>\n                            </div>\n                        </div>\n                    </div>\n                    <!-- <ul class=\"list-group\">\n                        <li class=\"list-group-item\" *ngFor=\"let r of previewItem.related\">\n                            <a href=\"javascript:void(0)\" (click)=\"selectNode(r)\">\n                                <img class=\"list-group-item-thumbnail\" [src]=\"getRelatedNode(r).external_url\" [alt]=\"getRelatedNode(r).description\">\n                            </a>\n                        </li>\n                    </ul> -->\n                </div>\n                <br>\n                <div class=\"network-degree\">\n                    <p>Network degree in: {{previewItem.network_degree_in}}</p>\n                    <p>Network degree out: {{previewItem.network_degree_out}}</p>\n                    <p>Network degree overall: {{previewItem.network_degree_overall}}</p>\n                </div>\n                <br>\n                <a [attr.href]=\"previewItem.externalURL\" target=\"_blank\">More information on this object</a>\n            </div>\n        </ng-sidebar>\n\n        <!-- Page Content -->\n        <div ng-sidebar-content class=\"side-bar-content\">\n            <div class=\"canvases\">\n                <canvas id=\"webgl-canvas\" #webGLCanvas></canvas>\n                <div id=\"css-canvas\" #cssCanvas></div>\n            </div>\n\n            <app-timeslider \n                *ngIf=\"dataLoaded\" \n                [minDate]=\"getMinDate()\" \n                [maxDate]=\"getMaxDate()\" \n                [width]=\"60\"\n                [height]=\"getWindowInnerHeight()\" \n                (onSelect)=\"filterDataWithTimeSlider($event)\">\n            </app-timeslider>\n\n            \n            <div class=\"category-legend\" *ngIf=\"dataLoaded\">\n                <!-- <label>Clickable Legend:</label> -->\n                <span class=\"category-selection\">Selected: {{ currentlySelectedCategory ? currentlySelectedCategory : 'none' }}</span>\n                <div class=\"category-wrapper\" *ngIf=\"showColorCodingLegend\">\n                    <div *ngFor=\"let c of categories\">\n                        <span data-toggle=\"tooltip\" data-placement=\"bottom\" [title]=\"c\"\n                            (click)=\"filterDataByCategory(c)\"\n                            [className]=\"c === currentlySelectedCategory ? 'badge badge-secondary active' : 'badge badge-secondary inactive'\"\n                            [ngStyle]=\"{ 'background-color' : categoriesAndColors.get(c) }\">&nbsp;</span>\n                    </div>\n                </div>\n                <div class=\"category-wrapper\">\n                    <div>\n                        <span class=\"badge badge-secondary\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"Clear\"\n                            (click)=\"clearCategoryFilter()\" style=\"background-color:#a9a9a9; font-size: 12px;\">&times;</span>\n                    </div>\n                </div>\n            </div>\n\n            <div class=\"options\">\n            <div class=\"btn-group\" role=\"group\">\n                <button type=\"button\" class=\"btn\" id=\"geo-view-button\" #geobtn title=\"Maps\">  <i class=\"fa fa-map-o\"></i></button>\n                <button type=\"button\" class=\"btn\" id=\"set-view-button\" #setbtn title=\"Categories \"> <i class=\"fa fa-spinner\"></i></button>\n                <button type=\"button\" class=\"btn\" id=\"net-view-button\" #netbtn title=\"Relations\"> <i class=\"fa fa-connectdevelop\"></i></button>\n            </div>\n            <div class=\"btn-group\" role=\"group\">\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"stc-view-button\" title=\"3D View\"> <i class=\"fa fa-cube\"></i></button>\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"jp-view-button\" title=\"Split View\"><i class=\"fa fa-object-ungroup\"></i></button>\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"si-view-button\" title=\"Colored View\"> <i class=\"fa fa-object-group\"></i></button>\n            </div>\n            </div>\n\n            <div class=\"overlay\" *ngIf=\"dataLoaded\">\n                <!--{{ formatDate(currentlySelectedDateExtent[0]) }} - {{ formatDate(currentlySelectedDateExtent[1]) }}</p>-->\n\n                <p> \n                <a (click)=\"showModal=true\">Vis info  | </a> \n                <a target=\"_blank\" href='https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0108857#s2'>Data Source </a> \n                </p>\n\n            </div>\n        </div>\n    </ng-sidebar-container>\n   \n\n    <div class=\"processing-change\" *ngIf=\"processingChange\">\n        <div class=\"spinner-border text-info\" role=\"status\">\n            <span class=\"sr-only\"></span>\n        </div>\n        <p>{{ processingMessage }}</p>\n    </div>\n\n    <div *ngIf=\"errorOccurred\" class=\"alert alert-danger error\">\n        <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\" (click)=\"errorOccurred = false\">&times;</a>\n        <strong>Error</strong>\n        <p>{{ errorMessage }}</p>\n    </div>\n</div>"
 
 /***/ }),
 
@@ -3856,7 +3877,6 @@ var CubeComponent = /** @class */ (function () {
                 $event.preventDefault();
                 var foundItem = _this.getClickedItem($event);
                 if (foundItem) {
-                    console.log(foundItem);
                     _this.previewItem = {
                         title: "Picture #" + foundItem.id,
                         id: foundItem.id,
@@ -3990,6 +4010,13 @@ var CubeComponent = /** @class */ (function () {
                 }
                 if (change.nCharge) {
                     _this.nCube.changeChargeFactor(change.nCharge);
+                }
+                // hide and show links button
+                if (change.nLinks == false) {
+                    _this.nCube.hideAllLinks();
+                }
+                else {
+                    _this.nCube.showCubeLinks_absolute();
                 }
             });
             // button event listeners
@@ -25537,7 +25564,6 @@ var ForceDirectedComponent = /** @class */ (function () {
                 y: d.y
             });
         });
-        // console.log(JSON.stringify(this.outputData))
     };
     tslib__WEBPACK_IMPORTED_MODULE_0__["__decorate"]([
         Object(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ViewChild"])('inputText'),
