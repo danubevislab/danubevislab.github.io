@@ -926,9 +926,13 @@ var GeoCube = /** @class */ (function () {
                 _this.findTimeSlice(dataItem.date_time).add(point);
             }
             // for default settings (TODO: move to a better)
-            _this.updateTime('absolute');
-            _this.updateJitter(5);
+            _this.defaultCubeConfig();
         });
+    };
+    GeoCube.prototype.defaultCubeConfig = function () {
+        this.updateTime('absolute');
+        this.updateJitter(5);
+        this.updateNodeColor('monochrome');
     };
     /**
      * Creates the map for the bottom slice of the cube (CSS3D)
@@ -1549,10 +1553,11 @@ var GUI = /** @class */ (function () {
                 nodeColor: pCubeParams.nodeColor
             });
         }).name('Point Color');
-        pCubeFolder.add(pCubeParams, 'dataSet', ['Cushman', 'Alliances', '?']).onChange(function () {
+        pCubeFolder.add(pCubeParams, 'dataSet', ['Cushman', 'IMDB']).onChange(function () {
             _this.pCubeConfigEmitter.emit('change', {
                 dataSet: pCubeParams.dataSet
             });
+            pCubeParams.dataSet === 'Cushman' ? window.location.href = 'https://polycube-1504526007066.firebaseapp.com/home' : window.location.href = 'https://danubevislab.github.io/';
         });
         // pCubeFolder.add(pCubeParams, 'cameraType', ['Perspective', 'Orthographic']).onChange(() => {
         //     this.pCubeConfigEmitter.emit('change', {
@@ -4180,6 +4185,10 @@ var CubeComponent = /** @class */ (function () {
      */
     CubeComponent.prototype.defaultSetup = function () {
         this.nCube.updateTime('absolute');
+        // default monochrome color
+        this.gCube.updateNodeColor('monochrome');
+        this.sCube.updateNodeColor('monochrome');
+        this.nCube.updateNodeColor('monochrome');
     };
     /**
      * Updates the data set with a new dataset
@@ -4961,7 +4970,7 @@ const CUBE_CONFIG = {
         // id: '1HLjB2soptO8PGLgGmQ7kOYkHQhEx18KJknWp6nMU31w',
         // id: '1lbK2QxF2dI-1GskjOqeI8t_E4xIqVd8exRA2fwtKAIQ',
         id: '1Jlzzxbv-tLgW475NmoDbsXlyXtVIhtZn2KW2l6Gw5LI',
-        name: 'Cushman'
+        name: 'IMDB'
     }
 }
 
