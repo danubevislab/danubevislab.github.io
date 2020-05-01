@@ -926,13 +926,9 @@ var GeoCube = /** @class */ (function () {
                 _this.findTimeSlice(dataItem.date_time).add(point);
             }
             // for default settings (TODO: move to a better)
-            _this.defaultCubeConfig();
+            _this.updateTime('absolute');
+            _this.updateJitter(5);
         });
-    };
-    GeoCube.prototype.defaultCubeConfig = function () {
-        this.updateTime('absolute');
-        this.updateJitter(5);
-        this.updateNodeColor('monochrome');
     };
     /**
      * Creates the map for the bottom slice of the cube (CSS3D)
@@ -1172,7 +1168,6 @@ var GeoCube = /** @class */ (function () {
         var _this = this;
         if (!this._cubeToggle)
             return;
-        this.updateNodeColor('categorical');
         var vertOffset = _cube_config__WEBPACK_IMPORTED_MODULE_1__["CUBE_CONFIG"].HEIGHT / this.dm.timeRange.length;
         this.boundingBox.visible = true;
         this.slices.forEach(function (slice, i) {
@@ -1522,7 +1517,7 @@ var GUI = /** @class */ (function () {
             },
             numSlices: 10,
             backgroundColor: '#ffffff',
-            nodeColor: 'categorical',
+            nodeColor: 'temporal',
             time: 'aggregated',
             nodeSize: _cube_config__WEBPACK_IMPORTED_MODULE_1__["CUBE_CONFIG"].NODE_SIZE,
             dataSet: _cube_config__WEBPACK_IMPORTED_MODULE_1__["CUBE_CONFIG"].DATA_SET.name,
@@ -1548,16 +1543,15 @@ var GUI = /** @class */ (function () {
                 time: pCubeParams.time
             });
         });
-        pCubeFolder.add(pCubeParams, 'nodeColor', ['categorical', 'temporal', 'monochrome']).onChange(function () {
+        pCubeFolder.add(pCubeParams, 'nodeColor', ['temporal', 'categorical', 'monochrome']).onChange(function () {
             _this.pCubeConfigEmitter.emit('change', {
                 nodeColor: pCubeParams.nodeColor
             });
         }).name('Point Color');
-        pCubeFolder.add(pCubeParams, 'dataSet', ['Cushman', 'IMDB']).onChange(function () {
+        pCubeFolder.add(pCubeParams, 'dataSet', ['Cushman', 'Alliances', '?']).onChange(function () {
             _this.pCubeConfigEmitter.emit('change', {
                 dataSet: pCubeParams.dataSet
             });
-            pCubeParams.dataSet === 'Cushman' ? window.location.href = 'https://polycube-1504526007066.firebaseapp.com/home' : window.location.href = 'https://danubevislab.github.io/';
         });
         // pCubeFolder.add(pCubeParams, 'cameraType', ['Perspective', 'Orthographic']).onChange(() => {
         //     this.pCubeConfigEmitter.emit('change', {
@@ -2064,7 +2058,6 @@ var NetCube = /** @class */ (function () {
         var _this = this;
         if (!this._cubeToggle)
             return;
-        this.updateNodeColor('categorical');
         this.currentTimeSetting === 'aggregated' ? this.showCubeLinks_aggregated() : this.showCubeLinks_absolute(); // get back setting
         this.showBottomLayer();
         this.boundingBox.visible = true;
@@ -3296,8 +3289,6 @@ var SetCube = /** @class */ (function () {
         }
         this.showBottomLayer();
         this.boundingBox.visible = true;
-        // TODO:on STC, update setcube with stacked layers
-        this.updateColorCoding('categorical');
         this.updateSetCube();
         var vertOffset = _cube_config__WEBPACK_IMPORTED_MODULE_2__["CUBE_CONFIG"].HEIGHT / this.dm.timeRange.length; // FIXME: value is aways divided by 1
         var duration = 1000, tween;
@@ -3418,8 +3409,6 @@ var SetCube = /** @class */ (function () {
         // on complete tweening, update setcube with flattened layers
         tween.onComplete(function () {
             _this.updateSetCube(1);
-            // update node colors to temporal
-            _this.updateNodeColor('temporal');
             _this.hideLabels();
         });
     };
@@ -3749,7 +3738,7 @@ module.exports = ".hide{\n    display: none !important;\n}\n.wrapper {\n    widt
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"modal\" #modal>\n        <span class=\"close\" (click)=\"closePicture()\">&times;</span>\n        <img class=\"modal-content\" id=\"img01\" #img (load)=\"imageLoaded()\">\n        <div id=\"caption\" #caption></div>\n        <button id=\"previous\" type=\"button\" class=\"btn btn-default\" aria-label=\"Left Align\" (click)=\"getPrevious()\">\n            <i class=\"fa fa-chevron-left\"></i>\n        </button>\n        <button id=\"next\" type=\"button\" class=\"btn btn-default\" aria-label=\"Right Align\" (click)=\"getNext()\">\n            <i class=\"fa fa-chevron-right\"></i>\n        </button>\n</div>\n\n<!-- Modal 2 -->\n<div [ngClass]=\"{'show': showModal}\" class=\"modal fade\" id=\"exampleModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"exampleModalLabel\" aria-hidden=\"true\">\n  <div class=\"modal-dialog\" role=\"document\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <h5 class=\"modal-title\" id=\"exampleModalLabel\">Most Influential Movies, Based on Cinematic References\n</h5>\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\">\n          <span aria-hidden=\"true\">&times;</span>\n        </button>\n      </div>\n      <div class=\"modal-body\">\n      <p>\nThis data shows the most influential 2000 feature films with regard to references between movies. It is an excerpt from the study of Spitz & Horvat (2014) on the long-term impact which movies had on other movies throughout film history (link). In the PolyCube system, the year of production, country of origin, movie genre, and movie references are represented from left to right.  \n    </p>\n</div>\n      <div class=\"modal-footer\">\n        <button (click)=\"showModal=false\" type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Close</button>\n      </div>\n    </div>\n  </div>\n</div>\n\n\n<div class=\"wrapper\">\n    <ng-sidebar-container>\n        <!-- Preview Panel Side Bar -->\n        <ng-sidebar [(opened)]=\"previewPanel\" mode=\"over\" animate=\"false\" sidebarClass=\"side-bar\">\n            <div class=\"pc-tooltip\" #tooltip></div>\n            \n            <div class=\"preview-item\" *ngIf=\"previewItem\">\n                <button id=\"close-preview\" type=\"button\" class=\"close\" aria-label=\"Close Preview\" (click)=\"closePreview()\">\n                    <span>&times;</span>\n                </button>\n                <!-- <h2 class=\"preview-title\">{{ previewItem.title }} </h2> -->\n                <img (click)=\"openPicture(previewItem.mediaURL, previewItem.description, previewItem.date)\" class=\"preview-picture\"\n                    [src]=\"previewItem.mediaURL\" (load)=\"imageLoaded()\">\n                <div *ngFor=\"let cat of previewItem.categories\" class=\"categories\">\n                    <span class=\"badge badge-secondary\">{{ cat }}</span>\n                </div>\n                <p class=\"preview-metainfo\">{{ previewItem.date }}, {{ previewItem.location }}</p>\n                <br>\n                <p class=\"preview-description\">{{ previewItem.description }}</p>\n                <div class=\"related\">\n                    <p>Related objects:</p>\n                    <div class=\"image-grid\">\n                        <div class=\"image-grid-cell\" *ngFor=\"let r of previewItem.related; let i = index\">\n                            <div *ngIf=\"i < 6\">\n                                <a  href=\"javascript:void(0)\" (click)=\"selectNode(r)\">\n                                     <img *ngIf=\"getRelatedNode(r)\" class=\"image-grid-image\" [src]=\"getRelatedNode(r).external_url\"  data-toggle=\"tooltip\" data-placement=\"bottom\" [title]=\"getRelatedNode(r).description\"> \n                                    <!-- {{ getRelatedNode(r).description === \"\" ? 'No description' : getRelatedNode(r).description }} -->\n                                </a>\n                            </div>\n                        </div>\n                    </div>\n                    <!-- <ul class=\"list-group\">\n                        <li class=\"list-group-item\" *ngFor=\"let r of previewItem.related\">\n                            <a href=\"javascript:void(0)\" (click)=\"selectNode(r)\">\n                                <img class=\"list-group-item-thumbnail\" [src]=\"getRelatedNode(r).external_url\" [alt]=\"getRelatedNode(r).description\">\n                            </a>\n                        </li>\n                    </ul> -->\n                </div>\n                <br>\n                <div class=\"network-degree\">\n                    <p>Network degree in: {{previewItem.network_degree_in}}</p>\n                    <p>Network degree out: {{previewItem.network_degree_out}}</p>\n                    <p>Network degree overall: {{previewItem.network_degree_overall}}</p>\n                </div>\n                <br>\n                <a [attr.href]=\"previewItem.externalURL\" target=\"_blank\">More information on this object</a>\n            </div>\n        </ng-sidebar>\n\n        <!-- Page Content -->\n        <div ng-sidebar-content class=\"side-bar-content\">\n            <div class=\"canvases\">\n                <canvas id=\"webgl-canvas\" #webGLCanvas></canvas>\n                <div id=\"css-canvas\" #cssCanvas></div>\n            </div>\n\n            <app-timeslider \n                *ngIf=\"dataLoaded\" \n                [minDate]=\"getMinDate()\" \n                [maxDate]=\"getMaxDate()\" \n                [width]=\"60\"\n                [height]=\"getWindowInnerHeight()\" \n                (onSelect)=\"filterDataWithTimeSlider($event)\">\n            </app-timeslider>\n\n            \n            <div class=\"category-legend\" *ngIf=\"dataLoaded\">\n                <!-- <label>Clickable Legend:</label> -->\n                <span class=\"category-selection\">Selected: {{ currentlySelectedCategory ? currentlySelectedCategory : 'none' }}</span>\n                <div class=\"category-wrapper\" *ngIf=\"showColorCodingLegend\">\n                    <div *ngFor=\"let c of categories\">\n                        <span data-toggle=\"tooltip\" data-placement=\"bottom\" [title]=\"c\"\n                            (click)=\"filterDataByCategory(c)\"\n                            [className]=\"c === currentlySelectedCategory ? 'badge badge-secondary active' : 'badge badge-secondary inactive'\"\n                            [ngStyle]=\"{ 'background-color' : categoriesAndColors.get(c) }\">&nbsp;</span>\n                    </div>\n                </div>\n                <div class=\"category-wrapper\">\n                    <div>\n                        <span class=\"badge badge-secondary\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"Clear\"\n                            (click)=\"clearCategoryFilter()\" style=\"background-color:#a9a9a9; font-size: 12px;\">&times;</span>\n                    </div>\n                </div>\n            </div>\n\n            <div class=\"options\">\n            <div class=\"btn-group\" role=\"group\">\n                <button type=\"button\" class=\"btn\" id=\"geo-view-button\" #geobtn title=\"Maps\">  <i class=\"fa fa-map-o\"></i></button>\n                <button type=\"button\" class=\"btn\" id=\"set-view-button\" #setbtn title=\"Categories \"> <i class=\"fa fa-spinner\"></i></button>\n                <button type=\"button\" class=\"btn\" id=\"net-view-button\" #netbtn title=\"Relations\"> <i class=\"fa fa-connectdevelop\"></i></button>\n            </div>\n            <div class=\"btn-group\" role=\"group\">\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"stc-view-button\" title=\"3D View\"> <i class=\"fa fa-cube\"></i></button>\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"jp-view-button\" title=\"Split View\"><i class=\"fa fa-object-ungroup\"></i></button>\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"si-view-button\" title=\"Colored View\"> <i class=\"fa fa-object-group\"></i></button>\n            </div>\n            </div>\n\n            <div class=\"overlay\" *ngIf=\"dataLoaded\">\n                <!--{{ formatDate(currentlySelectedDateExtent[0]) }} - {{ formatDate(currentlySelectedDateExtent[1]) }}</p>-->\n\n                <p> \n                <a (click)=\"showModal=true\">Vis info  | </a> \n                <a target=\"_blank\" href='https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0108857#s2'>Data Source </a> \n                </p>\n\n            </div>\n        </div>\n    </ng-sidebar-container>\n   \n\n    <div class=\"processing-change\" *ngIf=\"processingChange\">\n        <div class=\"spinner-border text-info\" role=\"status\">\n            <span class=\"sr-only\"></span>\n        </div>\n        <p>{{ processingMessage }}</p>\n    </div>\n\n    <div *ngIf=\"errorOccurred\" class=\"alert alert-danger error\">\n        <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\" (click)=\"errorOccurred = false\">&times;</a>\n        <strong>Error</strong>\n        <p>{{ errorMessage }}</p>\n    </div>\n</div>"
+module.exports = "<div class=\"modal\" #modal>\n        <span class=\"close\" (click)=\"closePicture()\">&times;</span>\n        <img class=\"modal-content\" id=\"img01\" #img (load)=\"imageLoaded()\">\n        <div id=\"caption\" #caption></div>\n        <button id=\"previous\" type=\"button\" class=\"btn btn-default\" aria-label=\"Left Align\" (click)=\"getPrevious()\">\n            <i class=\"fa fa-chevron-left\"></i>\n        </button>\n        <button id=\"next\" type=\"button\" class=\"btn btn-default\" aria-label=\"Right Align\" (click)=\"getNext()\">\n            <i class=\"fa fa-chevron-right\"></i>\n        </button>\n</div>\n\n<!-- Modal 2 -->\n<div [ngClass]=\"{'show': showModal}\" class=\"modal fade\" id=\"exampleModal\" tabindex=\"-1\" role=\"dialog\" aria-labelledby=\"exampleModalLabel\" aria-hidden=\"true\">\n  <div class=\"modal-dialog\" role=\"document\">\n    <div class=\"modal-content\">\n      <div class=\"modal-header\">\n        <h5 class=\"modal-title\" id=\"exampleModalLabel\">Most Influential Movies, Based on Cinematic References\n</h5>\n        <button type=\"button\" class=\"close\" data-dismiss=\"modal\" aria-label=\"Close\">\n          <span aria-hidden=\"true\">&times;</span>\n        </button>\n      </div>\n      <div class=\"modal-body\">\n      <p>\nThis data shows the most influential 2000 feature films with regard to references between movies. It is an excerpt from the study of Spitz & Horvat (2014) on the long-term impact which movies had on other movies throughout film history (link). In the PolyCube system, the year of production, country of origin, movie genre, and movie references are represented from left to right.  \n    </p>\n</div>\n      <div class=\"modal-footer\">\n        <button (click)=\"showModal=false\" type=\"button\" class=\"btn btn-secondary\" data-dismiss=\"modal\">Close</button>\n      </div>\n    </div>\n  </div>\n</div>\n\n\n<div class=\"wrapper\">\n    <ng-sidebar-container>\n        <!-- Preview Panel Side Bar -->\n        <ng-sidebar [(opened)]=\"previewPanel\" mode=\"over\" animate=\"false\" sidebarClass=\"side-bar\">\n            <div class=\"pc-tooltip\" #tooltip></div>\n            \n            <div class=\"preview-item\" *ngIf=\"previewItem\">\n                <button id=\"close-preview\" type=\"button\" class=\"close\" aria-label=\"Close Preview\" (click)=\"closePreview()\">\n                    <span>&times;</span>\n                </button>\n                <!-- <h2 class=\"preview-title\">{{ previewItem.title }} </h2> -->\n                <img (click)=\"openPicture(previewItem.mediaURL, previewItem.description, previewItem.date)\" class=\"preview-picture\"\n                    [src]=\"previewItem.mediaURL\" (load)=\"imageLoaded()\">\n                <div *ngFor=\"let cat of previewItem.categories\" class=\"categories\">\n                    <span class=\"badge badge-secondary\">{{ cat }}</span>\n                </div>\n                <p class=\"preview-metainfo\">{{ previewItem.date }}, {{ previewItem.location }}</p>\n                <br>\n                <p class=\"preview-description\">{{ previewItem.description }}</p>\n                <div class=\"related\">\n                    <p>Related objects:</p>\n                    <div class=\"image-grid\">\n                        <div class=\"image-grid-cell\" *ngFor=\"let r of previewItem.related; let i = index\">\n                            <div *ngIf=\"i < 6\">\n                                <a  href=\"javascript:void(0)\" (click)=\"selectNode(r)\">\n                                     <img *ngIf=\"getRelatedNode(r)\" class=\"image-grid-image\" [src]=\"getRelatedNode(r).external_url\"  data-toggle=\"tooltip\" data-placement=\"bottom\" [title]=\"getRelatedNode(r).description\"> \n                                    <!-- {{ getRelatedNode(r).description === \"\" ? 'No description' : getRelatedNode(r).description }} -->\n                                </a>\n                            </div>\n                        </div>\n                    </div>\n                    <!-- <ul class=\"list-group\">\n                        <li class=\"list-group-item\" *ngFor=\"let r of previewItem.related\">\n                            <a href=\"javascript:void(0)\" (click)=\"selectNode(r)\">\n                                <img class=\"list-group-item-thumbnail\" [src]=\"getRelatedNode(r).external_url\" [alt]=\"getRelatedNode(r).description\">\n                            </a>\n                        </li>\n                    </ul> -->\n                </div>\n                <br>\n                <div class=\"network-degree\">\n                    <p>Network degree in: {{previewItem.network_degree_in}}</p>\n                    <p>Network degree out: {{previewItem.network_degree_out}}</p>\n                    <p>Network degree overall: {{previewItem.network_degree_overall}}</p>\n                </div>\n                <br>\n                <a [attr.href]=\"previewItem.externalURL\" target=\"_blank\">More information on this object</a>\n            </div>\n        </ng-sidebar>\n\n        <!-- Page Content -->\n        <div ng-sidebar-content class=\"side-bar-content\">\n            <div class=\"canvases\">\n                <canvas id=\"webgl-canvas\" #webGLCanvas></canvas>\n                <div id=\"css-canvas\" #cssCanvas></div>\n            </div>\n\n            <app-timeslider \n                *ngIf=\"dataLoaded\" \n                [minDate]=\"getMinDate()\" \n                [maxDate]=\"getMaxDate()\" \n                [width]=\"60\"\n                [height]=\"getWindowInnerHeight()\" \n                (onSelect)=\"filterDataWithTimeSlider($event)\">\n            </app-timeslider>\n\n            \n            <div class=\"category-legend\" *ngIf=\"dataLoaded\">\n                <!-- <label>Clickable Legend:</label> -->\n                <span class=\"category-selection\">Selected: {{ currentlySelectedCategory ? currentlySelectedCategory : 'none' }}</span>\n                <div class=\"category-wrapper\" *ngIf=\"showColorCodingLegend\">\n                    <div *ngFor=\"let c of categories\">\n                        <span data-toggle=\"tooltip\" data-placement=\"bottom\" [title]=\"c\"\n                            (click)=\"filterDataByCategory(c)\"\n                            [className]=\"c === currentlySelectedCategory ? 'badge badge-secondary active' : 'badge badge-secondary inactive'\"\n                            [ngStyle]=\"{ 'background-color' : categoriesAndColors.get(c) }\">&nbsp;</span>\n                    </div>\n                </div>\n                <div class=\"category-wrapper\">\n                    <div>\n                        <span class=\"badge badge-secondary\" data-toggle=\"tooltip\" data-placement=\"bottom\" title=\"Clear\"\n                            (click)=\"clearCategoryFilter()\" style=\"background-color:#a9a9a9; font-size: 12px;\">&times;</span>\n                    </div>\n                </div>\n            </div>\n\n            <div class=\"options\">\n            <div class=\"btn-group\" role=\"group\">\n                <button type=\"button\" class=\"btn\" id=\"geo-view-button\" #geobtn title=\"Maps\">  <i class=\"fa fa-map-o\"></i></button>\n                <button type=\"button\" class=\"btn\" id=\"set-view-button\" #setbtn title=\"Categories \"> <i class=\"fa fa-spinner\"></i></button>\n                <button type=\"button\" class=\"btn\" id=\"net-view-button\" #netbtn title=\"Relations\"> <i class=\"fa fa-connectdevelop\"></i></button>\n            </div>\n            <div class=\"btn-group\" role=\"group\">\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"stc-view-button\" title=\"Space-Time Cube (STC)\"> <i class=\"fa fa-cube\"></i></button>\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"jp-view-button\" title=\"Juxtaposition (JP)\"><i class=\"fa fa-object-ungroup\"></i></button>\n                <button type=\"button\" class=\"btn  btn-outline-secondary\" id=\"si-view-button\" title=\"Superimposition (SI)\"> <i class=\"fa fa-object-group\"></i></button>\n            </div>\n            </div>\n\n            <div class=\"overlay\" *ngIf=\"dataLoaded\">\n                <!--{{ formatDate(currentlySelectedDateExtent[0]) }} - {{ formatDate(currentlySelectedDateExtent[1]) }}</p>-->\n\n                <p> \n                <a (click)=\"showModal=true\">Vis info  | </a> \n                <a target=\"_blank\" href='https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0108857#s2'>Data Source </a> \n                </p>\n\n            </div>\n        </div>\n    </ng-sidebar-container>\n   \n\n    <div class=\"processing-change\" *ngIf=\"processingChange\">\n        <div class=\"spinner-border text-info\" role=\"status\">\n            <span class=\"sr-only\"></span>\n        </div>\n        <p>{{ processingMessage }}</p>\n    </div>\n\n    <div *ngIf=\"errorOccurred\" class=\"alert alert-danger error\">\n        <a href=\"#\" class=\"close\" data-dismiss=\"alert\" aria-label=\"close\" (click)=\"errorOccurred = false\">&times;</a>\n        <strong>Error</strong>\n        <p>{{ errorMessage }}</p>\n    </div>\n</div>"
 
 /***/ }),
 
@@ -3956,17 +3945,7 @@ var CubeComponent = /** @class */ (function () {
                     _this.nCube.updateNodeSize(change.nodeSize);
                 }
                 if (change.nodeColor) {
-                    _this.showColorCodingLegend = change.nodeColor !== 'categorical' ? false : true;
-                    _this.gCube.updateNodeColor(change.nodeColor);
-                    _this.sCube.updateNodeColor(change.nodeColor);
-                    _this.nCube.updateNodeColor(change.nodeColor);
-                    //update timeline color
-                    if (change.nodeColor === 'temporal') {
-                        _this.timelineColor(true);
-                    }
-                    else {
-                        _this.timelineColor(false);
-                    }
+                    _this.updateNodeColor(change.nodeColor);
                 }
                 // camera switch 
                 if (change.cameraType) {
@@ -4043,12 +4022,9 @@ var CubeComponent = /** @class */ (function () {
                 _this.transitionJPCamera();
             });
             _this.gui.siBtn.addEventListener('click', function () {
-                _this.gCube.updateNodeColor('temporal');
-                _this.nCube.updateNodeColor('temporal');
                 _this.gCube.transitionSI();
                 _this.sCube.transitionSI();
                 _this.nCube.transitionSI();
-                //this.sCube.updateNodeColor('temporal'); //FIXME: need to be called after SI is finished in SCUBE
                 //rotate camera to SI
                 _this.transitionSICamera();
             });
@@ -4153,6 +4129,7 @@ var CubeComponent = /** @class */ (function () {
         var _this = this;
         this.loadingDataset = true;
         var _id = _cube_config__WEBPACK_IMPORTED_MODULE_13__["CUBE_CONFIG"].DATA_SET.id; // Cushman dataset ID
+        var dataset_name = _cube_config__WEBPACK_IMPORTED_MODULE_13__["CUBE_CONFIG"].DATA_SET.name;
         // perform request to get spreadsheet json 
         // parse it when done and pass to datamanager
         this.google.load(_id).then(function (success) {
@@ -4177,18 +4154,20 @@ var CubeComponent = /** @class */ (function () {
             _this.initGUI();
             _this.addEventListeners();
             _this.animate();
-            _this.defaultSetup(); // just the default setup
+            _this.defaultSetup(dataset_name); // just the default setup
         });
     };
     /**
      * function for default cube inital setup
      */
-    CubeComponent.prototype.defaultSetup = function () {
+    CubeComponent.prototype.defaultSetup = function (dataset_id) {
         this.nCube.updateTime('absolute');
-        // default monochrome color
-        this.gCube.updateNodeColor('monochrome');
-        this.sCube.updateNodeColor('monochrome');
-        this.nCube.updateNodeColor('monochrome');
+        if (dataset_id == "Cushman") {
+            this.updateNodeColor('temporal');
+        }
+        else { //IMDB or others
+            this.updateNodeColor('monochrome');
+        }
     };
     /**
      * Updates the data set with a new dataset
@@ -4303,13 +4282,26 @@ var CubeComponent = /** @class */ (function () {
         this.processingMessage = '';
         console.log('image loaded');
     };
+    CubeComponent.prototype.updateNodeColor = function (nodeColor) {
+        this.showColorCodingLegend = nodeColor !== 'categorical' ? false : true;
+        this.gCube.updateNodeColor(nodeColor);
+        this.sCube.updateNodeColor(nodeColor);
+        this.nCube.updateNodeColor(nodeColor);
+        //update timeline color
+        if (nodeColor == 'temporal') {
+            this.displayTimelineColor(true);
+        }
+        else {
+            this.displayTimelineColor(false);
+        }
+    };
     /**
       * Rotate Camera to SI view
       */
     CubeComponent.prototype.transitionSICamera = function () {
         var _this = this;
         //update timeline color as true
-        this.timelineColor(true);
+        this.displayTimelineColor(true);
         this.restoreCamera(this.camToSave.position, this.camToSave.rotation, this.camToSave.controlCenter);
         //stop rotation
         this.controls.enableRotate = false;
@@ -4331,7 +4323,7 @@ var CubeComponent = /** @class */ (function () {
     CubeComponent.prototype.transitionSTCCamera = function () {
         var _this = this;
         //update timeline color as false
-        this.timelineColor(false);
+        this.displayTimelineColor(false);
         this.restoreCamera(this.camToSave.position, this.camToSave.rotation, this.camToSave.controlCenter);
         //allow rotation
         this.controls.enableRotate = true;
@@ -4350,7 +4342,7 @@ var CubeComponent = /** @class */ (function () {
     CubeComponent.prototype.transitionJPCamera = function () {
         var _this = this;
         // update timeline color
-        this.timelineColor(false);
+        this.displayTimelineColor(false);
         this.restoreCamera(this.camToSave.position, this.camToSave.rotation, this.camToSave.controlCenter);
         // stop rotation
         this.controls.enableRotate = false;
@@ -4410,8 +4402,8 @@ var CubeComponent = /** @class */ (function () {
     /**
      * This function is used to update brush timeline color
      */
-    CubeComponent.prototype.timelineColor = function (visible) {
-        if (visible == true) {
+    CubeComponent.prototype.displayTimelineColor = function (visible) {
+        if (visible) {
             // D3.select('#timeLegend').classed('hide', false)
             d3__WEBPACK_IMPORTED_MODULE_4__["select"]('#timeLegend').style('display', 'block');
         }
@@ -4586,7 +4578,7 @@ var CubeComponent = /** @class */ (function () {
 /*! no static exports found */
 /***/ (function(module, exports) {
 
-module.exports = ".time-slider {\n    position: absolute;\n    z-index: 999;\n    top: 0em;\n    /* left: 25vw; this is offset defined by gui class in app.component.css */\n}\n\n::ng-deep .time-slider svg {\n    overflow: visible;\n}\n\n/*time slider*/\n\n.axis--grid .domain {\n    /*fill: #ddd;*/\n    stroke: none;\n}\n\n.axis--x .domain,\n.axis--grid .tick line {\n    stroke: #353636;\n}\n\n/*.axis--y .domain,*/\n\n.tick text {\n    /*fill: #EDCA3A;*/\n    /*fill: #462015;*/\n    /*fill: #c83409;*/\n    fill: #2d2d2d;\n}\n\n/*.axis--y .domain,*/\n\n.notick text {\n    /*fill: #353636 !important;*/\n    stroke: #525252;\n    stroke-width: 0.3px;\n    font-size: 120%;\n    font-weight: bold;\n}\n\n.axis--grid .tick--minor line {\n    stroke-opacity: .5;\n}\n\n.axis2,\n.axis--y2 line {\n    stroke: #8a8a8a;\n    stroke-opacity: .5;\n}\n\n.axis,\n.axis--chart {\n    /*fill: #3f3f3f;*/\n    fill: #353636;\n    stroke-width: 0;\n}\n\n::ng-deep .brush rect.selection {\n    fill: steelblue;\n    fill-opacity: .125;\n    width: 40px;\n}\n\n::ng-deep .brush2 rect.selection {\n    fill: rgb(173, 180, 70);\n    fill-opacity: .125;\n    width: 40px;\n}\n\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNyYy9hcHAvY29tcG9uZW50cy90aW1lc2xpZGVyLmNvbXBvbmVudC90aW1lc2xpZGVyLmNzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtJQUNJLGtCQUFrQjtJQUNsQixZQUFZO0lBQ1osUUFBUTtJQUNSLHlFQUF5RTtBQUM3RTs7QUFFQTtJQUNJLGlCQUFpQjtBQUNyQjs7QUFHQSxjQUFjOztBQUNkO0lBQ0ksY0FBYztJQUNkLFlBQVk7QUFDaEI7O0FBRUE7O0lBRUksZUFBZTtBQUNuQjs7QUFFQSxvQkFBb0I7O0FBQ3BCO0lBQ0ksaUJBQWlCO0lBQ2pCLGlCQUFpQjtJQUNqQixpQkFBaUI7SUFDakIsYUFBYTtBQUNqQjs7QUFFQSxvQkFBb0I7O0FBQ3BCO0lBQ0ksNEJBQTRCO0lBQzVCLGVBQWU7SUFDZixtQkFBbUI7SUFDbkIsZUFBZTtJQUNmLGlCQUFpQjtBQUNyQjs7QUFHQTtJQUNJLGtCQUFrQjtBQUN0Qjs7QUFFQTs7SUFFSSxlQUFlO0lBQ2Ysa0JBQWtCO0FBQ3RCOztBQUVBOztJQUVJLGlCQUFpQjtJQUNqQixhQUFhO0lBQ2IsZUFBZTtBQUNuQjs7QUFFQTtJQUNJLGVBQWU7SUFDZixrQkFBa0I7SUFDbEIsV0FBVztBQUNmOztBQUVBO0lBQ0ksdUJBQXVCO0lBQ3ZCLGtCQUFrQjtJQUNsQixXQUFXO0FBQ2YiLCJmaWxlIjoic3JjL2FwcC9jb21wb25lbnRzL3RpbWVzbGlkZXIuY29tcG9uZW50L3RpbWVzbGlkZXIuY3NzIiwic291cmNlc0NvbnRlbnQiOlsiLnRpbWUtc2xpZGVyIHtcbiAgICBwb3NpdGlvbjogYWJzb2x1dGU7XG4gICAgei1pbmRleDogOTk5O1xuICAgIHRvcDogMGVtO1xuICAgIC8qIGxlZnQ6IDI1dnc7IHRoaXMgaXMgb2Zmc2V0IGRlZmluZWQgYnkgZ3VpIGNsYXNzIGluIGFwcC5jb21wb25lbnQuY3NzICovXG59XG5cbjo6bmctZGVlcCAudGltZS1zbGlkZXIgc3ZnIHtcbiAgICBvdmVyZmxvdzogdmlzaWJsZTtcbn1cblxuXG4vKnRpbWUgc2xpZGVyKi9cbi5heGlzLS1ncmlkIC5kb21haW4ge1xuICAgIC8qZmlsbDogI2RkZDsqL1xuICAgIHN0cm9rZTogbm9uZTtcbn1cblxuLmF4aXMtLXggLmRvbWFpbixcbi5heGlzLS1ncmlkIC50aWNrIGxpbmUge1xuICAgIHN0cm9rZTogIzM1MzYzNjtcbn1cblxuLyouYXhpcy0teSAuZG9tYWluLCovXG4udGljayB0ZXh0IHtcbiAgICAvKmZpbGw6ICNFRENBM0E7Ki9cbiAgICAvKmZpbGw6ICM0NjIwMTU7Ki9cbiAgICAvKmZpbGw6ICNjODM0MDk7Ki9cbiAgICBmaWxsOiAjMmQyZDJkO1xufVxuXG4vKi5heGlzLS15IC5kb21haW4sKi9cbi5ub3RpY2sgdGV4dCB7XG4gICAgLypmaWxsOiAjMzUzNjM2ICFpbXBvcnRhbnQ7Ki9cbiAgICBzdHJva2U6ICM1MjUyNTI7XG4gICAgc3Ryb2tlLXdpZHRoOiAwLjNweDtcbiAgICBmb250LXNpemU6IDEyMCU7XG4gICAgZm9udC13ZWlnaHQ6IGJvbGQ7XG59XG5cblxuLmF4aXMtLWdyaWQgLnRpY2stLW1pbm9yIGxpbmUge1xuICAgIHN0cm9rZS1vcGFjaXR5OiAuNTtcbn1cblxuLmF4aXMyLFxuLmF4aXMtLXkyIGxpbmUge1xuICAgIHN0cm9rZTogIzhhOGE4YTtcbiAgICBzdHJva2Utb3BhY2l0eTogLjU7XG59XG5cbi5heGlzLFxuLmF4aXMtLWNoYXJ0IHtcbiAgICAvKmZpbGw6ICMzZjNmM2Y7Ki9cbiAgICBmaWxsOiAjMzUzNjM2O1xuICAgIHN0cm9rZS13aWR0aDogMDtcbn1cblxuOjpuZy1kZWVwIC5icnVzaCByZWN0LnNlbGVjdGlvbiB7XG4gICAgZmlsbDogc3RlZWxibHVlO1xuICAgIGZpbGwtb3BhY2l0eTogLjEyNTtcbiAgICB3aWR0aDogNDBweDtcbn1cblxuOjpuZy1kZWVwIC5icnVzaDIgcmVjdC5zZWxlY3Rpb24ge1xuICAgIGZpbGw6IHJnYigxNzMsIDE4MCwgNzApO1xuICAgIGZpbGwtb3BhY2l0eTogLjEyNTtcbiAgICB3aWR0aDogNDBweDtcbn1cbiJdfQ== */"
+module.exports = ".time-slider {\n    position: absolute;\n    z-index: 999;\n    top: 0em;\n    /* left: 25vw; this is offset defined by gui class in app.component.css */\n}\n\n::ng-deep .time-slider svg {\n    overflow: visible;\n}\n\n/*time slider*/\n\n.axis--grid .domain {\n    /*fill: #ddd;*/\n    stroke: none;\n}\n\n.axis--x .domain,\n.axis--grid .tick line {\n    stroke: #353636;\n}\n\n/*.axis--y .domain,*/\n\n.tick text {\n    /*fill: #EDCA3A;*/\n    /*fill: #462015;*/\n    /*fill: #c83409;*/\n    fill: #2d2d2d;\n}\n\n/*.axis--y .domain,*/\n\n.notick text {\n    /*fill: #353636 !important;*/\n    stroke: #525252;\n    stroke-width: 0.3px;\n    font-size: 120%;\n    font-weight: bold;\n}\n\n.axis--grid .tick--minor line {\n    stroke-opacity: .5;\n}\n\n.axis2,\n.axis--y2 line {\n    stroke: #8a8a8a;\n    stroke-opacity: .5;\n}\n\n.axis,\n.axis--chart {\n    /*fill: #3f3f3f;*/\n    fill: #353636;\n    stroke-width: 0;\n}\n\n::ng-deep .brush rect.selection {\n    fill: steelblue;\n    fill-opacity: .125;\n    width: 40px;\n}\n\n::ng-deep .brush2 rect.selection {\n    fill: rgb(173, 180, 70);\n    fill-opacity: .125;\n    width: 40px;\n}\n\n\n/*# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbInNyYy9hcHAvY29tcG9uZW50cy90aW1lc2xpZGVyLmNvbXBvbmVudC90aW1lc2xpZGVyLmNzcyJdLCJuYW1lcyI6W10sIm1hcHBpbmdzIjoiQUFBQTtJQUNJLGtCQUFrQjtJQUNsQixZQUFZO0lBQ1osUUFBUTtJQUNSLHlFQUF5RTtBQUM3RTs7QUFFQTtJQUNJLGlCQUFpQjtBQUNyQjs7QUFHQSxjQUFjOztBQUNkO0lBQ0ksY0FBYztJQUNkLFlBQVk7QUFDaEI7O0FBRUE7O0lBRUksZUFBZTtBQUNuQjs7QUFFQSxvQkFBb0I7O0FBQ3BCO0lBQ0ksaUJBQWlCO0lBQ2pCLGlCQUFpQjtJQUNqQixpQkFBaUI7SUFDakIsYUFBYTtBQUNqQjs7QUFFQSxvQkFBb0I7O0FBQ3BCO0lBQ0ksNEJBQTRCO0lBQzVCLGVBQWU7SUFDZixtQkFBbUI7SUFDbkIsZUFBZTtJQUNmLGlCQUFpQjtBQUNyQjs7QUFHQTtJQUNJLGtCQUFrQjtBQUN0Qjs7QUFFQTs7SUFFSSxlQUFlO0lBQ2Ysa0JBQWtCO0FBQ3RCOztBQUVBOztJQUVJLGlCQUFpQjtJQUNqQixhQUFhO0lBQ2IsZUFBZTtBQUNuQjs7QUFFQTtJQUNJLGVBQWU7SUFDZixrQkFBa0I7SUFDbEIsV0FBVztBQUNmOztBQUVBO0lBQ0ksdUJBQXVCO0lBQ3ZCLGtCQUFrQjtJQUNsQixXQUFXO0FBQ2YiLCJmaWxlIjoic3JjL2FwcC9jb21wb25lbnRzL3RpbWVzbGlkZXIuY29tcG9uZW50L3RpbWVzbGlkZXIuY3NzIiwic291cmNlc0NvbnRlbnQiOlsiLnRpbWUtc2xpZGVyIHtcbiAgICBwb3NpdGlvbjogYWJzb2x1dGU7XG4gICAgei1pbmRleDogOTk5O1xuICAgIHRvcDogMGVtO1xuICAgIC8qIGxlZnQ6IDI1dnc7IHRoaXMgaXMgb2Zmc2V0IGRlZmluZWQgYnkgZ3VpIGNsYXNzIGluIGFwcC5jb21wb25lbnQuY3NzICovXG59XG5cbjo6bmctZGVlcCAudGltZS1zbGlkZXIgc3ZnIHtcbiAgICBvdmVyZmxvdzogdmlzaWJsZTtcbn1cblxuXG4vKnRpbWUgc2xpZGVyKi9cbi5heGlzLS1ncmlkIC5kb21haW4ge1xuICAgIC8qZmlsbDogI2RkZDsqL1xuICAgIHN0cm9rZTogbm9uZTtcbn1cblxuLmF4aXMtLXggLmRvbWFpbixcbi5heGlzLS1ncmlkIC50aWNrIGxpbmUge1xuICAgIHN0cm9rZTogIzM1MzYzNjtcbn1cblxuLyouYXhpcy0teSAuZG9tYWluLCovXG4udGljayB0ZXh0IHtcbiAgICAvKmZpbGw6ICNFRENBM0E7Ki9cbiAgICAvKmZpbGw6ICM0NjIwMTU7Ki9cbiAgICAvKmZpbGw6ICNjODM0MDk7Ki9cbiAgICBmaWxsOiAjMmQyZDJkO1xufVxuXG4vKi5heGlzLS15IC5kb21haW4sKi9cbi5ub3RpY2sgdGV4dCB7XG4gICAgLypmaWxsOiAjMzUzNjM2ICFpbXBvcnRhbnQ7Ki9cbiAgICBzdHJva2U6ICM1MjUyNTI7XG4gICAgc3Ryb2tlLXdpZHRoOiAwLjNweDtcbiAgICBmb250LXNpemU6IDEyMCU7XG4gICAgZm9udC13ZWlnaHQ6IGJvbGQ7XG59XG5cblxuLmF4aXMtLWdyaWQgLnRpY2stLW1pbm9yIGxpbmUge1xuICAgIHN0cm9rZS1vcGFjaXR5OiAuNTtcbn1cblxuLmF4aXMyLFxuLmF4aXMtLXkyIGxpbmUge1xuICAgIHN0cm9rZTogIzhhOGE4YTtcbiAgICBzdHJva2Utb3BhY2l0eTogLjU7XG59XG5cbi5heGlzLFxuLmF4aXMtLWNoYXJ0IHtcbiAgICAvKmZpbGw6ICMzZjNmM2Y7Ki9cbiAgICBmaWxsOiAjMzUzNjM2O1xuICAgIHN0cm9rZS13aWR0aDogMDtcbn1cblxuOjpuZy1kZWVwIC5icnVzaCByZWN0LnNlbGVjdGlvbiB7XG4gICAgZmlsbDogc3RlZWxibHVlO1xuICAgIGZpbGwtb3BhY2l0eTogLjEyNTtcbiAgICB3aWR0aDogNDBweDtcbn1cblxuOjpuZy1kZWVwIC5icnVzaDIgcmVjdC5zZWxlY3Rpb24ge1xuICAgIGZpbGw6IHJnYigxNzMsIDE4MCwgNzApO1xuICAgIGZpbGwtb3BhY2l0eTogLjEyNTtcbiAgICB3aWR0aDogNDBweDtcbn1cblxuIl19 */"
 
 /***/ }),
 
@@ -4637,7 +4629,6 @@ var TimeSliderComponent = /** @class */ (function () {
         this.xScale = d3__WEBPACK_IMPORTED_MODULE_2__["scaleLinear"]().range([0, this.width]);
         this.yScale = d3__WEBPACK_IMPORTED_MODULE_2__["scaleTime"]().domain([this.maxDate, this.minDate]).range([0, this.height]);
         this.yScale2 = d3__WEBPACK_IMPORTED_MODULE_2__["scaleTime"]().domain([new Date(2000, 1, 1), new Date(1900, 1, 1)]).range([0, this.height]);
-        console.log(this.maxDate, this.minDate);
         // define brush
         this.brush = d3__WEBPACK_IMPORTED_MODULE_2__["brushY"]()
             .extent([[0, 0], [this.width, this.height]])
@@ -4662,18 +4653,6 @@ var TimeSliderComponent = /** @class */ (function () {
             return d3__WEBPACK_IMPORTED_MODULE_2__["timeFormat"]('%Y')(d);
         }))
             .selectAll('.tick');
-        // timeline 2
-        // this._svg.append('g')
-        //     .attr('class', 'axis2 axis--y2')
-        //     .call(
-        //         D3.axisRight(this.yScale2)
-        //             // .ticks(D3.timeYear.every(1))
-        //             .tickSize(10)
-        //             // .tickFormat((d: Date) => {
-        //             //     return D3.timeFormat('%Y')(d);
-        //             // })
-        //     )
-        //     .selectAll('.tick');
         // Legend
         var defs = this._svg.append('defs');
         var linearGradient = defs.append('linearGradient')
@@ -4707,15 +4686,33 @@ var TimeSliderComponent = /** @class */ (function () {
             .attr('class', 'timeLegend')
             .append('rect')
             .attr('id', 'timeLegend')
-            .style('display', 'none')
             .attr('width', 20 + 'px')
             .attr('height', this.height)
             .attr('transform', 'translate(' + -20 + ', 0 )')
             .attr('fill', 'url(#linear-gradient)');
+        // Define the div for the tooltip
+        var tooltip = d3__WEBPACK_IMPORTED_MODULE_2__["select"]("body").append("div")
+            .attr("class", "tooltip")
+            .style("position", "absolute")
+            .style("z-index", "9999999")
+            .style("visibility", "hidden");
         // animate button
         var playButton = this._svg.append('g')
             .attr('transform', 'translate(' + 0 + ',' + (this.height + buttonYSize) + ')')
-            .attr('class', 'animateButton');
+            .attr('class', 'animateButton')
+            .on("mouseover", function (d) {
+            return tooltip.style("visibility", "visible");
+        })
+            .on("mousemove", function (d) {
+            return tooltip.style("top", (d3__WEBPACK_IMPORTED_MODULE_2__["event"].pageY - 10) + "px")
+                .style("left", (d3__WEBPACK_IMPORTED_MODULE_2__["event"].pageX + 10) + "px")
+                .style("border-style", "solid")
+                .style("border-width", "thin")
+                .style("background-color", "rgba(255,255,255)");
+        })
+            .on("mouseout", function () {
+            return tooltip.style("visibility", "hidden");
+        });
         playButton.append('rect')
             .attr('width', this.width)
             .attr('height', buttonYSize);
@@ -4967,6 +4964,7 @@ const CUBE_CONFIG = {
     NODE_SIZE: 2,
     DATA_SET: {
         // id: '1j-FnypM3zD2fjWWoZUa_X6ENh4LosKF627fZoXKSxpY',
+        // name: 'Cushman',
         // id: '1HLjB2soptO8PGLgGmQ7kOYkHQhEx18KJknWp6nMU31w',
         // id: '1lbK2QxF2dI-1GskjOqeI8t_E4xIqVd8exRA2fwtKAIQ',
         id: '1Jlzzxbv-tLgW475NmoDbsXlyXtVIhtZn2KW2l6Gw5LI',
