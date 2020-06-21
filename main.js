@@ -913,7 +913,10 @@ var GeoCube = /** @class */ (function () {
             var geometry = new three_full__WEBPACK_IMPORTED_MODULE_2__["SphereGeometry"](_cube_config__WEBPACK_IMPORTED_MODULE_1__["CUBE_CONFIG"].NODE_SIZE, 32, 32);
             for (var i = 0; i < _this.dm.data.length; i++) {
                 var dataItem = _this.dm.data[i];
-                var material = new three_full__WEBPACK_IMPORTED_MODULE_2__["MeshBasicMaterial"]({ color: _this.colors(dataItem.category_1) });
+                var material = void 0;
+                // check if dataset is IMDB, then use monochrome as default, else use categorical
+                // let material = new THREE.MeshBasicMaterial({ color: this.colors(dataItem.category_1) });
+                _cube_config__WEBPACK_IMPORTED_MODULE_1__["CUBE_CONFIG"].DATA_SET.name === "IMDB" ? material = new three_full__WEBPACK_IMPORTED_MODULE_2__["MeshBasicMaterial"]({ color: "#cc1414" }) : material = new three_full__WEBPACK_IMPORTED_MODULE_2__["MeshBasicMaterial"]({ color: _this.colors(dataItem.category_1) });
                 var cubeCoords = _this.map.project(new mapbox_gl__WEBPACK_IMPORTED_MODULE_5__["LngLat"](dataItem.longitude, dataItem.latitude));
                 var point = new three_full__WEBPACK_IMPORTED_MODULE_2__["Mesh"](geometry, material);
                 // need to offset the x,z coordinate so they overlap with cube
@@ -4283,6 +4286,7 @@ var CubeComponent = /** @class */ (function () {
         console.log('image loaded');
     };
     CubeComponent.prototype.updateNodeColor = function (nodeColor) {
+        console.log(nodeColor);
         this.showColorCodingLegend = nodeColor !== 'categorical' ? false : true;
         this.gCube.updateNodeColor(nodeColor);
         this.sCube.updateNodeColor(nodeColor);
